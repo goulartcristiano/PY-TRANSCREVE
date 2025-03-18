@@ -1,4 +1,3 @@
-# transcricao.py
 import whisper  # Importa a biblioteca Whisper para reconhecimento de fala.
 import numpy as np  # Importa a biblioteca NumPy para operações numéricas (usada internamente pelo Whisper).
 from idiomas_mapeamento import obter_nome_completo_idioma  # Importa a função para obter o nome completo do idioma.

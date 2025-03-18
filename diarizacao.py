@@ -1,4 +1,3 @@
-# diarizacao.py
 from pyannote.audio import Pipeline
 import torch
 import datetime

@@ -1,4 +1,3 @@
-# idiomas_mapeamento.py
 LINGUAGENS = {
     "en": "Inglês",
     "pt": "Português",
