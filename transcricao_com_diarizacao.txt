@@ -1,0 +1,9 @@
+Linguagem Detectada: Inglês
+0:00:06 - SPEAKER_02:  Today we will be demonstrating how to perform a whisper test.
+0:00:10 - SPEAKER_02:  The purpose of this examination is to detect both conductive and sensory neural hearing
+0:00:15 - SPEAKER_02:  loss.
+0:00:16 - SPEAKER_02:  Let's begin.
+0:00:20 - SPEAKER_01:  I will be conducting the hearing test for you today.
+0:00:22 - SPEAKER_01:  Okay.
+0:00:23 - SPEAKER_01:  And we'll have you sit here on the table and face forward.
+0:00:25 - SPEAKER_01:  During the test I'll stand behind you and I'm going to say a number of letters sequence.
