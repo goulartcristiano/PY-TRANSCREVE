@@ -9,7 +9,7 @@ LINGUAGENS = {
     "zh": "Chinês",
     "ko": "Coreano",
     "ru": "Russo",
-    # Adicione mais idiomas conforme necessário
+    # Adicionar mais idiomas conforme necessário
 }
 
 def obter_nome_completo_idioma(codigo_idioma):

@@ -1,4 +1,3 @@
-# main.py
 from diarizacao import diarize_audio, format_diarization_output
 from transcricao_full import transcribe_audio
 import whisper

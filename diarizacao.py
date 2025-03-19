@@ -4,12 +4,11 @@ import datetime
 import pyannote.core
 
 # Carrega o pipeline de diarização de falantes.
-# É importante que você tenha um token de acesso do HuggingFace salvo em seu ambiente.
-# Você pode verificar isso com: huggingface-cli whoami
+# Criar um token de acesso do HuggingFace salvo no ambiente. Verificar com: huggingface-cli whoami
 try:
     # Tenta carregar o pipeline pré-treinado para diarização de falantes (versão 3.1).
     pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1")
-    # Se você tiver uma GPU, descomente a próxima linha para usar a GPU.
+    # Descomentar a próxima linha para usar a GPU.
     # pipeline.to(torch.device("cuda"))
 except Exception as e:
     # Se ocorrer um erro ao carregar o pipeline, imprime uma mensagem de erro.
