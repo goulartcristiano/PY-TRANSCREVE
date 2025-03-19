@@ -1,71 +1,61 @@
-from diarizacao import diarize_audio, format_diarization_output
-from transcricao_full import transcribe_audio
-import whisper
-import datetime
-import numpy as np
+from diarizacao import diarize_audio  # Importa a função para diarização de áudio.
+from transcricao import transcribe_audio  # Importa a função para transcrição de áudio.
+import whisper  # Importa a biblioteca Whisper para reconhecimento de fala.
+import datetime  # Importa o módulo datetime para manipulação de datas e horas.
 
 def transcribe_with_diarization(audio_file):
     """
-    Transcreve um arquivo de áudio com o Whisper e adiciona a diarização de falantes em blocos (chunks).
+    Transcreve um arquivo de áudio com Whisper e adiciona a diarização.
 
     Args:
-        audio_file (str): O caminho para o arquivo de áudio.
+        audio_file (str): Caminho para o arquivo de áudio.
 
     Returns:
-        str: A saída combinada da transcrição e da diarização.
+        tuple: Uma tupla contendo a linguagem detectada (str) e a saída combinada da transcrição e da diarização (str).
     """
-    # Obtém a linguagem e a transcrição completa usando a função transcribe_audio
+    # Chama a função transcribe_audio para obter a linguagem detectada e a transcrição completa.
+    # detect_language_every_chunk=False indica que a detecção de idioma será feita apenas uma vez no início.
     linguagem, full_transcription = transcribe_audio(audio_file, detect_language_every_chunk=False)
+    print(f"Linguagem detectada no arquivo: {linguagem}")  # Imprime a linguagem detectada.
 
-    # Exibe a linguagem detectada
-    print(f"Linguagem detectada no arquivo: {linguagem}")
+    model = whisper.load_model("base")  # Carrega o modelo Whisper "base".
+    audio = whisper.load_audio(audio_file)  # Carrega o arquivo de áudio.
+    options = whisper.DecodingOptions()  # Define as opções de decodificação padrão.
+    result = model.transcribe(audio, **options.__dict__)  # Transcreve o áudio inteiro usando o modelo Whisper.
 
-    # Carrega o modelo Whisper para obter os timestamps das palavras.
-    model = whisper.load_model("base")
-    audio = whisper.load_audio(audio_file)
-    chunk_size = whisper.audio.N_SAMPLES  # 30 segundos (tamanho padrão dos blocos do Whisper)
-    chunks = [audio[i:i + chunk_size] for i in range(0, len(audio), chunk_size)] # Divide o áudio em blocos de 30 segundos
+    diarization = diarize_audio(audio_file)  # Chama a função diarize_audio para obter a diarização do áudio.
+    output = ""  # Inicializa uma string vazia para armazenar a saída formatada.
 
-    diarization = diarize_audio(audio_file) # Realiza a diarização do áudio, identificando quem fala quando.
+    # Itera sobre cada segmento na transcrição do Whisper.
+    for segment in result["segments"]:
+        segment_start_time = datetime.timedelta(seconds=segment["start"])  # Converte o tempo de início do segmento para um objeto timedelta.
+        segment_end_time = datetime.timedelta(seconds=segment["end"])  # Converte o tempo de fim do segmento para um objeto timedelta.
+        formatted_time = str(segment_start_time).split(".")[0]  # Formata o tempo de início para o formato HH:MM:SS.
+        text = segment["text"]  # Obtém o texto transcrito do segmento.
 
-    output = "" # Inicializa uma string vazia para armazenar a saída formatada.
+        speaker = ""  # Inicializa uma string vazia para armazenar o falante do segmento.
+        # Itera sobre cada turno na diarização.
+        for turn, _, spk in diarization.itertracks(yield_label=True):
+            # Verifica se o tempo de início do segmento está dentro do turno.
+            if turn.start <= segment["start"] <= turn.end:
+                speaker = spk  # Define o falante do segmento.
+                break  # Sai do loop interno, pois já encontrou o falante.
 
-    for chunk in chunks: # Itera sobre cada bloco de áudio.
-        options = whisper.DecodingOptions() # Define as opções de decodificação do Whisper.
-        #result = model.transcribe(chunk, **options.__dict__) # aqui está a correção
-        # Transcreve o bloco atual de áudio usando o modelo Whisper.
-        # **options.__dict__ passa as opções de decodificação como argumentos nomeados.
-        # O método transcribe do whisper espera um array numpy, mas chunk é um array numpy, então não precisa de alteração
-        result = model.transcribe(chunk, **options.__dict__)
+        # Se um falante foi encontrado para o segmento.
+        if speaker:
+            output += f"{formatted_time} - {speaker}: {text}\n"  # Adiciona a linha formatada à saída.
 
-        for segment in result["segments"]:  # Itera sobre cada segmento de fala detectado pelo Whisper dentro do bloco.
-            segment_start_time = datetime.timedelta(seconds=segment["start"]) # Converte o tempo de início do segmento para um objeto timedelta.
-            segment_end_time = datetime.timedelta(seconds=segment["end"]) # Converte o tempo de fim do segmento para um objeto timedelta.
-            formatted_time = str(segment_start_time).split(".")[0] # Formata o tempo de início para o formato HH:MM:SS.
-            text = segment["text"] # Obtém o texto transcrito do segmento.
-
-            speaker = "" # Inicializa uma string vazia para armazenar o nome do falante.
-            for turn, _, spk in diarization.itertracks(yield_label=True): # Itera sobre cada turno de fala identificado pela diarização.
-                # Verifica se o segmento está dentro do turno atual.
-                if turn.start <= segment["start"] <= turn.end:
-                    speaker = spk # Atribui o nome do falante ao segmento.
-                    break # Sai do loop de turnos, pois já encontramos o falante do segmento.
-
-            if speaker: # Se um falante foi identificado para o segmento.
-                output += f"{formatted_time} - {speaker}: {text}\n" # Adiciona o texto, o falante e o tempo à saída formatada.
-
-    return linguagem, output # Retorna a linguagem e a saída formatada com a transcrição e a diarização.
+    return linguagem, output  # Retorna a linguagem detectada e a saída formatada.
 
 # Exemplo de Uso
-audio_file = "audio_curto.mp3"  # Substitua pelo seu arquivo de áudio.
+audio_file = "audio_curto.mp3"  # Define o nome do arquivo de áudio.
 
-# Chama a função principal
-linguagem_detectada, final_output = transcribe_with_diarization(audio_file)
+linguagem_detectada, final_output = transcribe_with_diarization(audio_file)  # Chama a função principal para transcrever e diarizar o áudio.
 
-# Salva a saída em um arquivo
-output_filename = "transcricao_com_diarizacao.txt"
+output_filename = "transcricao_com_diarizacao.txt"  # Define o nome do arquivo de saída.
+# Abre o arquivo de saída em modo de escrita com codificação UTF-8.
 with open(output_filename, "w", encoding="utf-8") as f:
-    f.write(f"Linguagem Detectada: {linguagem_detectada}\n") # Escreve a linguagem detectada no início do arquivo.
-    f.write(final_output) # Escreve o texto da transcrição e diarização no arquivo
+    f.write(f"Linguagem Detectada: {linguagem_detectada}\n")  # Escreve a linguagem detectada no arquivo.
+    f.write(final_output)  # Escreve a saída formatada no arquivo.
 
-print(f"Transcrição combinada com diarização salva em: {output_filename}")
+print(f"Transcrição combinada com diarização salva em: {output_filename}")  # Imprime uma mensagem informando que o arquivo foi salvo.
